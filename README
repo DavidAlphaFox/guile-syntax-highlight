@@ -1,0 +1,66 @@
+-*- mode: org -*-
+
+Guile-syntax-highlight is a general-purpose syntax highlighting
+library for GNU Guile.  It can parse code written in various
+programming languages into a simple s-expression that can be easily
+converted to HTML (via SXML) or any other format for rendering.
+
+* Example
+
+  #+BEGIN_SRC scheme
+    (use-modules (syntax-highlight)
+                 (syntax-highlight scheme)
+                 (sxml simple))
+
+    (define code
+      "(define (square x) \"Return the square of X.\" (* x x))")
+
+    ;; Get raw highlights list.
+    (define highlighted-code
+      (highlight scheme-highlighter code))
+
+    ;; Convert to SXML.
+    (define highlighted-sxml
+      (highlights->sxml highlighted-code))
+
+    ;; Write HTML to stdout.
+    (display (sxml->xml highlighted-sxml))
+    (newline)
+  #+END_SRC
+
+* Requirements
+
+  - GNU Guile >= 2.0.9
+
+* Building
+
+  Guile-syntax-highlight uses the familiar GNU build system and
+  requires GNU Make to build.
+
+** From tarball
+
+   After extracting the tarball, run:
+
+   #+BEGIN_SRC sh
+     ./configure
+     make
+     make install
+   #+END_SRC
+
+** From Git
+
+   In addition to GNU Make, building from Git requires GNU Automake
+   and Autoconf.
+
+   #+BEGIN_SRC sh
+     git clone git@dthompson.us:guile-syntax-highlight.git
+     cd guile-syntax-highlight
+     ./bootstrap
+     ./configure
+     make
+     make install
+   #+END_SRC
+
+* License
+
+  LGPLv3 or later.  See =COPYING= for the full license text.
