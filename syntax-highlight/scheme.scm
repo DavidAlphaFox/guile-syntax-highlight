@@ -93,10 +93,3 @@ language."
               parse-keyword
               parse-quoted-symbol
               parse-symbol)))
-
-;; (scheme-highlighter
-;;  (string->stream
-;;   "(define* (foo bar #:key (baz 'quux))
-;;   \"This is a docstring!\"
-;;   #u8(1 2 3)
-;;   (1+ bar))"))
