@@ -195,5 +195,5 @@ Within the sequence, ESCAPE is recognized as the escape character."
 
 (define (tagged-parser tag parser)
   "Create a parser that wraps the result of PARSER in a two element
-list whose first element is TAG.."
+list whose first element is TAG."
   (parse-map (cut list tag <>) parser))
