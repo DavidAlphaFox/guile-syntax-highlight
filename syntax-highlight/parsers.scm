@@ -187,7 +187,8 @@ Within the sequence, ESCAPE is recognized as the escape character."
                    (loop rest (cons* head escape result)))))
                ((parse-until-maybe stream) =>
                 (lambda (remaining)
-                  (stringify (append (string->list until) result) remaining)))
+                  (stringify (append (reverse (string->list until)) result)
+                             remaining)))
                (else
                 (loop (stream-cdr stream) (cons (stream-car stream) result)))))
             (parse-fail stream))))))
