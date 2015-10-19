@@ -32,6 +32,45 @@ converted to HTML (via SXML) or any other format for rendering.
     (newline)
   #+END_SRC
 
+* Implementation details
+
+  Very simple monadic parser combinators (purposely lacking support
+  for recursive grammars currently) are used to tokenize the
+  characters within a string or port and return a list consisting of
+  two types of values: strings and two element tagged lists.  A tagged
+  list consists of a symbol designating the type of the text (symbol,
+  keyword, string literal, etc.) and a string of the text fragment
+  itself.
+
+  #+BEGIN_SRC scheme
+    ((open "(")
+     (special "define")
+     " "
+     (open "(")
+     (symbol "square")
+     " "
+     (symbol "x")
+     (close ")")
+     " "
+     (string "\"Return the square of X.\"")
+     " "
+     (open "(")
+     (symbol "*")
+     " "
+     (symbol "x")
+     " "
+     (symbol "x")
+     (close ")")
+     (close ")"))
+  #+END_SRC
+
+  This means that the parsers are *not* intended to produce the
+  abstract syntax-tree for any given language.  They are simply to
+  attempt to tokenize and tag fragments of the source.  A "catch all"
+  rule in each language's parser is used to deal with text that
+  doesn't match any recognized syntax and simply produces an untagged
+  string.
+
 * Requirements
 
   - GNU Guile >= 2.0.9
