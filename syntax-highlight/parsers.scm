@@ -38,6 +38,7 @@
             parse-both
             parse-any
             parse-each
+            parse-maybe
             parse-many
             parse-string
             parse-char-set
@@ -116,6 +117,16 @@ succeeds."
 parser fails without consuming any input if any parser in PARSERS
 fails."
   (fold-right parse-both (parse-return '()) parsers))
+
+(define (parse-maybe parser)
+  "Create a parser that always succeeds, but tries to use PARSER.  If
+PARSER succeeds, its result is returned, otherwise the empty string is
+returned without consuming any input."
+  (lambda (stream)
+    (let-values (((result remaining) (parser stream)))
+      (if result
+          (values result remaining)
+          (values "" stream)))))
 
 (define (parse-many parser)
   "Create a parser that uses PARSER as many times as possible until it
