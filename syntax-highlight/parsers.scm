@@ -23,6 +23,7 @@
 
 (define-module (syntax-highlight parsers)
   #:use-module (ice-9 match)
+  #:use-module (ice-9 regex)
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-11)
   #:use-module (srfi srfi-26)
@@ -43,6 +44,7 @@
             parse-char-set
             parse-whitespace
             parse-delimited
+            parse-regexp
             tagged-parser))
 
 ;;;
@@ -202,6 +204,14 @@ Within the sequence, ESCAPE is recognized as the escape character."
                (else
                 (loop (stream-cdr stream) (cons (stream-car stream) result)))))
             (parse-fail stream))))))
+
+(define (parse-regexp regexp parser)
+  "Create a parser that succeeds if the result of PARSER is a string
+that matches the string REGEXP."
+  (let ((rx (make-regexp regexp)))
+    (parse-filter (lambda (result)
+                    (regexp-match? (regexp-exec rx result)))
+                  parser)))
 
 (define (tagged-parser tag parser)
   "Create a parser that wraps the result of PARSER in a two element
