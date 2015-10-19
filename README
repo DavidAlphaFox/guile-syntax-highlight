@@ -8,6 +8,7 @@ converted to HTML (via SXML) or any other format for rendering.
 * Supported Languages
 
   - Scheme
+  - XML
 
 * Example
 

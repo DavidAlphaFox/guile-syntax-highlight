@@ -41,6 +41,7 @@ godir=$(libdir)/guile/2.0/ccache
 SOURCES =					\
   syntax-highlight/parsers.scm			\
   syntax-highlight/scheme.scm			\
+  syntax-highlight/xml.scm			\
   syntax-highlight.scm
 
 EXTRA_DIST +=					\
