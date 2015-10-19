@@ -35,6 +35,10 @@
 (define (lisp-delimiter? char)
   (char-set-contains? char-set:lisp-delimiters char))
 
+(define parse-symbol-chars
+  (parse-char-set
+   (char-set-complement char-set:lisp-delimiters)))
+
 (define (parse-specials special-words)
   "Create a parser for SPECIAL-WORDS, a list of important terms for a
 language."
@@ -47,6 +51,15 @@ language."
               (parse-fail stream))))))
 
   (fold parse-either parse-never (map special special-words)))
+
+(define (parse-specials/regexp special-regexps)
+  (let ((merged-regexp
+         (string-join (map (lambda (regexp)
+                             (string-append "(" regexp ")"))
+                           special-regexps)
+                      "|")))
+    (tagged-parser 'special
+                   (parse-regexp merged-regexp parse-symbol-chars))))
 
 (define (parse-openers openers)
   (define (open opener)
@@ -69,9 +82,7 @@ language."
   (tagged-parser 'keyword
                  (parse-map string-concatenate
                             (parse-each (parse-string "#:")
-                                        (parse-char-set
-                                         (char-set-complement
-                                          char-set:lisp-delimiters))))))
+                                        parse-symbol-chars))))
 
 (define parse-string-literal
   (tagged-parser 'string (parse-delimited "\"")))
@@ -82,12 +93,30 @@ language."
 (define parse-quoted-symbol
   (tagged-parser 'symbol (parse-delimited "#{" #:until "}#")))
 
+(define %default-special-symbols
+  '("define" "begin" "call-with-current-continuation" "call/cc"
+    "call-with-input-file" "call-with-output-file"
+    "case" "cond"
+    "do" "else" "if"
+    "lambda" "λ"
+    "let" "let*" "let-syntax" "letrec" "letrec-syntax"
+    "export" "import" "library" "define-module" "use-module"
+    "let-values" "let*-values"
+    "and" "or"
+    "delay" "force"
+    "map" "for-each"
+    "syntax" "syntax-rules"))
+
+(define %default-special-regexps
+  '("^define"))
+
 (define scheme-highlighter
   (parse-many
    (parse-any parse-whitespace
               (parse-openers '("(" "[" "{"))
               (parse-closers '(")" "]" "}"))
-              (parse-specials '("define" "lambda"))
+              (parse-specials %default-special-symbols)
+              (parse-specials/regexp %default-special-regexps)
               parse-string-literal
               parse-comment
               parse-keyword
