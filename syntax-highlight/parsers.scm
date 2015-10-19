@@ -32,7 +32,6 @@
             parse-bind
             parse-return
             parse-lift
-            parse-never
             parse-map
             parse-filter
             parse-either
@@ -52,7 +51,7 @@
 ;;;
 
 (define (parse-fail stream)
-  "Return a failed parse value with STREAM as the remainder."
+  "Always fail to parse STREAM without consuming any of it."
   (values #f stream))
 
 (define (parse-bind proc parser)
@@ -71,10 +70,6 @@
   "Return a procedure that wraps the result of PROC in a parser."
   (lambda args
     (parse-return (apply proc args))))
-
-(define (parse-never stream)
-  "Always fail to parse STREAM."
-  (parse-fail stream))
 
 (define (parse-map proc parser)
   "Return a new parser that applies PROC to result of PARSER."
@@ -114,7 +109,7 @@ FIRST and SECOND if both are successful."
   "Create a parser that returns the result of the first successful
 parser in PARSERS.  This parser fails if no parser in PARSERS
 succeeds."
-  (fold-right parse-either parse-never parsers))
+  (fold-right parse-either parse-fail parsers))
 
 (define (parse-each . parsers)
   "Create a parser that builds a list of the results of PARSERS.  This

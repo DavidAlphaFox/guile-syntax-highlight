@@ -53,7 +53,7 @@ language."
               (values result rest-of-stream)
               (parse-fail stream))))))
 
-  (fold parse-either parse-never (map special special-words)))
+  (fold parse-either parse-fail (map special special-words)))
 
 (define (parse-specials/regexp special-regexps)
   (let ((merged-regexp
@@ -68,13 +68,13 @@ language."
   (define (open opener)
     (tagged-parser 'open (parse-string opener)))
 
-  (fold parse-either parse-never (map open openers)))
+  (fold parse-either parse-fail (map open openers)))
 
 (define (parse-closers closers)
   (define (close closer)
     (tagged-parser 'close (parse-string closer)))
 
-  (fold parse-either parse-never (map close closers)))
+  (fold parse-either parse-fail (map close closers)))
 
 (define parse-symbol
   (tagged-parser 'symbol
