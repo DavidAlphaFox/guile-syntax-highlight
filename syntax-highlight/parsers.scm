@@ -89,20 +89,20 @@ PREDICATE is satisfied with the result."
   "Create a parser that tries to parse with FIRST or, if that fails,
 parses SECOND."
   (lambda (stream)
-    (let-values (((result stream) (first stream)))
+    (let-values (((result remaining) (first stream)))
       (if result
-          (values result stream)
+          (values result remaining)
           (second stream)))))
 
 (define (parse-both first second)
   "Create a parser that returns a pair of the results of the parsers
 FIRST and SECOND if both are successful."
   (lambda (stream)
-    (let-values (((result1 stream) (first stream)))
+    (let-values (((result1 remaining) (first stream)))
       (if result1
-          (let-values (((result2 stream) (second stream)))
+          (let-values (((result2 remaining) (second remaining)))
             (if result2
-                (values (cons result1 result2) stream)
+                (values (cons result1 result2) remaining)
                 (parse-fail stream)))
           (parse-fail stream)))))
 
