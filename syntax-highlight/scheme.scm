@@ -26,7 +26,10 @@
   #:use-module (srfi srfi-11)
   #:use-module (srfi srfi-41)
   #:use-module (syntax-highlight parsers)
-  #:export (scheme-highlighter))
+  #:export (%default-special-symbols
+            %default-special-regexps
+            make-scheme-highlighter
+            scheme-highlighter))
 
 (define char-set:lisp-delimiters
   (char-set-union char-set:whitespace
@@ -110,15 +113,22 @@ language."
 (define %default-special-regexps
   '("^define"))
 
-(define scheme-highlighter
+(define* (make-scheme-highlighter special-symbols special-regexps)
+  "Create a syntax highlighting procedure for Scheme that associates
+the 'special' tag for symbols appearing in the list SPECIAL-SYMBOLS or
+matching a regular expression in SPECIAL-REGEXPS."
   (parse-many
    (parse-any parse-whitespace
               (parse-openers '("(" "[" "{"))
               (parse-closers '(")" "]" "}"))
-              (parse-specials %default-special-symbols)
-              (parse-specials/regexp %default-special-regexps)
+              (parse-specials special-symbols)
+              (parse-specials/regexp special-regexps)
               parse-string-literal
               parse-comment
               parse-keyword
               parse-quoted-symbol
               parse-symbol)))
+
+(define scheme-highlighter
+  (make-scheme-highlighter %default-special-symbols
+                           %default-special-regexps))
