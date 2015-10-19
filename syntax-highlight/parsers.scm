@@ -33,6 +33,7 @@
             parse-lift
             parse-never
             parse-map
+            parse-filter
             parse-either
             parse-both
             parse-any
@@ -76,6 +77,15 @@
 (define (parse-map proc parser)
   "Return a new parser that applies PROC to result of PARSER."
   (parse-bind (parse-lift proc) parser))
+
+(define (parse-filter predicate parser)
+  "Create a new parser that succeeds when PARSER is successful and
+PREDICATE is satisfied with the result."
+  (lambda (stream)
+    (let-values (((result remaining) (parser stream)))
+      (if (and result (predicate result))
+          (values result remaining)
+          (parse-fail stream)))))
 
 (define (parse-either first second)
   "Create a parser that tries to parse with FIRST or, if that fails,
