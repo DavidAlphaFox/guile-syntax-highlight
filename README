@@ -73,6 +73,19 @@ converted to HTML (via SXML) or any other format for rendering.
   highlighter is used to deal with text that doesn't match any
   recognized syntax and simply produces an untagged string.
 
+  Most syntax highlighters use lots of regular expressions to do their
+  magic, but guile-syntax-highlight uses a purely functional, monadic
+  parser combinator interface instead.  This makes it easy for
+  developers to build complex parsers by creating compositions of many
+  simpler ones.  Additionally, rather than working with raw strings or
+  Guile's file ports, the input code is represented as a lazy stream
+  of characters using the SRFI-41 streams library.  By using streams,
+  parsers do not have to worry about things like reverting the
+  character index from which a file is being read upon a failure, or
+  any other state management.  Parsers simply return the thing they
+  parsed, if any, and the remaining stream to be consumed by another
+  parser.
+
 * Requirements
 
   - GNU Guile >= 2.0.9
