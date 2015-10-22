@@ -28,6 +28,7 @@
   #:use-module (srfi srfi-11)
   #:use-module (srfi srfi-26)
   #:use-module (srfi srfi-41)
+  #:use-module (syntax-highlight utils)
   #:export (parse-fail
             parse-bind
             parse-return
@@ -140,8 +141,6 @@ parser always succeeds."
             (loop remaining (cons result results))
             (values (reverse results)
                     remaining))))))
-
-(define stream->string (compose list->string stream->list))
 
 (define (parse-string str)
   "Create a parser that succeeds when the front of the stream contains

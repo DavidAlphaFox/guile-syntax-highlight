@@ -27,14 +27,9 @@
   #:use-module (srfi srfi-11)
   #:use-module (srfi srfi-26)
   #:use-module (srfi srfi-41)
+  #:use-module (syntax-highlight utils)
   #:export (highlight
             highlights->sxml))
-
-(define (string->stream str)
-  "Convert the string STR into a stream of characters."
-  (stream-map (lambda (i)
-                (string-ref str i))
-              (stream-range 0 (string-length str))))
 
 (define* (highlight highlighter #:optional (stream (current-input-port)))
   "Apply HIGHLIGHTER, a syntax highlighting procedure, to STREAM.
