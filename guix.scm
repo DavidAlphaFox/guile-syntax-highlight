@@ -38,7 +38,14 @@
 (package
   (name "guile-syntax-highlight")
   (version "0.1")
-  (source #f)
+  (source (origin
+            (method git-fetch)
+            (uri (git-reference
+                  (url "git://dthompson.us/guile-syntax-highlight.git")
+                  (commit "84b6e91")))
+            (sha256
+             (base32
+              "1nv2b5fxm06xb2xr5i81sc27sjlmxzpva1fxv471pbvyz0nxgcfz"))))
   (build-system gnu-build-system)
   (arguments
    '(#:phases
