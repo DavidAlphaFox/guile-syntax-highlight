@@ -36,7 +36,7 @@
 STREAM may be an open port, string, or SRFI-41 character stream.  If
 STREAM is not specified, characters are read from the current input
 port."
-  (let-values (((result stream)
+  (let-values (((result remaining)
                 (highlighter (cond
                               ((port? stream)
                                (port->stream stream))
@@ -46,7 +46,13 @@ port."
                                stream)
                               (else
                                (error "Cannot convert to stream: " stream))))))
-    result))
+    ;; If there's a remainder, it means that parsing failed.  We want
+    ;; to preserve *all* of the input text, even if it is invalid.
+    ;; So, we take the stuff that could be parsed and tack on the
+    ;; stuff that wasn't.
+    (if (stream-null? remaining)
+        result
+        (append result (list (stream->string remaining))))))
 
 (define (highlights->sxml highlights)
   "Convert HIGHLIGHTS, a list of syntax highlighting expressions, into
