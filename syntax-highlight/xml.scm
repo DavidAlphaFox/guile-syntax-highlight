@@ -105,7 +105,7 @@
   (parse-map flatten+compact
              (parse-many
               (parse-any parse-comment
-                         parse-open-tag
                          parse-close-tag
+                         parse-open-tag
                          parse-entity
                          parse-text))))
