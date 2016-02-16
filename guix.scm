@@ -33,7 +33,8 @@
              (guix build-system gnu)
              (gnu packages)
              (gnu packages autotools)
-             (gnu packages guile))
+             (gnu packages guile)
+             (gnu packages pkg-config))
 
 (package
   (name "guile-syntax-highlight")
@@ -42,10 +43,10 @@
             (method git-fetch)
             (uri (git-reference
                   (url "git://dthompson.us/guile-syntax-highlight.git")
-                  (commit "84b6e91")))
+                  (commit "deaad79")))
             (sha256
              (base32
-              "1nv2b5fxm06xb2xr5i81sc27sjlmxzpva1fxv471pbvyz0nxgcfz"))))
+              "00ppmg796mcahq8nnq081srf6iwx36biq7arvsi5azm7f6lmwkdc"))))
   (build-system gnu-build-system)
   (arguments
    '(#:phases
@@ -54,7 +55,8 @@
          (lambda _ (zero? (system* "sh" "bootstrap")))))))
   (native-inputs
    `(("autoconf" ,autoconf)
-     ("automake" ,automake)))
+     ("automake" ,automake)
+     ("pkg-config" ,pkg-config)))
   (inputs
    `(("guile" ,guile-2.0)))
   (synopsis "General-purpose syntax highlighter for GNU Guile")
