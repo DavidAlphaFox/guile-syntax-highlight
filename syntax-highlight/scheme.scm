@@ -22,113 +22,87 @@
 ;;; Code:
 
 (define-module (syntax-highlight scheme)
+  #:use-module (ice-9 match)
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-11)
-  #:use-module (srfi srfi-41)
-  #:use-module (syntax-highlight parsers)
+  #:use-module (srfi srfi-26)
+  #:use-module (syntax-highlight lexers)
   #:export (%default-special-symbols
             %default-special-regexps
-            make-scheme-highlighter
-            scheme-highlighter))
+            make-scheme-lexer
+            lex-scheme))
 
 (define char-set:lisp-delimiters
   (char-set-union char-set:whitespace
                   (char-set #\( #\) #\[ #\] #\{ #\})))
 
-(define (lisp-delimiter? char)
-  (char-set-contains? char-set:lisp-delimiters char))
-
-(define parse-symbol-chars
-  (parse-char-set
-   (char-set-complement char-set:lisp-delimiters)))
-
-(define (parse-specials special-words)
-  "Create a parser for SPECIAL-WORDS, a list of important terms for a
-language."
-  (define (special word)
-    (let ((parser (tagged-parser 'special (parse-string word))))
-      (lambda (stream)
-        (let-values (((result rest-of-stream) (parser stream)))
-          (if (and result (lisp-delimiter? (stream-car stream)))
-              (values result rest-of-stream)
-              (parse-fail stream))))))
-
-  (fold parse-either parse-fail (map special special-words)))
-
-(define (parse-specials/regexp special-regexps)
-  (let ((merged-regexp
-         (string-join (map (lambda (regexp)
-                             (string-append "(" regexp ")"))
-                           special-regexps)
-                      "|")))
-    (tagged-parser 'special
-                   (parse-regexp merged-regexp parse-symbol-chars))))
-
-(define (parse-openers openers)
-  (define (open opener)
-    (tagged-parser 'open (parse-string opener)))
-
-  (fold parse-either parse-fail (map open openers)))
-
-(define (parse-closers closers)
-  (define (close closer)
-    (tagged-parser 'close (parse-string closer)))
-
-  (fold parse-either parse-fail (map close closers)))
-
-(define parse-symbol
-  (tagged-parser 'symbol
-                 (parse-char-set
-                  (char-set-complement char-set:lisp-delimiters))))
-
-(define parse-keyword
-  (tagged-parser 'keyword
-                 (parse-map string-concatenate
-                            (parse-each (parse-string "#:")
-                                        parse-symbol-chars))))
-
-(define parse-string-literal
-  (tagged-parser 'string (parse-delimited "\"")))
-
-(define parse-comment
-  (tagged-parser 'comment (parse-delimited ";" #:until "\n")))
-
-(define parse-quoted-symbol
-  (tagged-parser 'symbol (parse-delimited "#{" #:until "}#")))
+(define char-set:lisp-symbol
+  (char-set-complement char-set:lisp-delimiters))
 
 (define %default-special-symbols
-  '("define" "begin" "call-with-current-continuation" "call/cc"
+  '("begin" "call-with-current-continuation" "call/cc"
     "call-with-input-file" "call-with-output-file"
     "case" "cond"
     "do" "else" "if"
     "lambda" "λ"
     "let" "let*" "let-syntax" "letrec" "letrec-syntax"
-    "export" "import" "library" "define-module" "use-module"
     "let-values" "let*-values"
+    "export" "import" "library" "use-module"
     "and" "or"
     "delay" "force"
-    "map" "for-each"
-    "syntax" "syntax-rules"))
+    "map" "for-each"))
 
-(define %default-special-regexps
-  '("^define"))
+(define %default-special-prefixes
+  '("define" "syntax"))
 
-(define* (make-scheme-highlighter special-symbols special-regexps)
-  "Create a syntax highlighting procedure for Scheme that associates
-the 'special' tag for symbols appearing in the list SPECIAL-SYMBOLS or
-matching a regular expression in SPECIAL-REGEXPS."
-  (parse-many
-   (parse-any parse-whitespace
-              (parse-openers '("(" "[" "{"))
-              (parse-closers '(")" "]" "}"))
-              (parse-specials special-symbols)
-              (parse-specials/regexp special-regexps)
-              parse-string-literal
-              parse-comment
-              parse-keyword
-              parse-quoted-symbol
-              parse-symbol)))
+(define (lex-special-symbol sym)
+  (lex-filter (lambda (str)
+                (string=? sym str))
+              (lex-char-set char-set:lisp-symbol)))
 
-(define scheme-highlighter
-  (make-scheme-highlighter %default-special-symbols
-                           %default-special-regexps))
+(define (lex-special-symbol symbols prefixes)
+  (lex-filter (lambda (str)
+                (or (any (cut string=? symbols <>) symbols)
+                    (any (cut string-prefix? <> str) prefixes)))
+              (lex-char-set char-set:lisp-symbol)))
+
+(define (lex-map2 proc lexer)
+  (lambda (tokens cursor)
+    (let-values (((result remainder) (lexer tokens cursor)))
+      (if result
+          (match (token-take result 2)
+            ((second first) ; accumulator tokens are in reverse order
+             (values (token-add (token-drop result 2)
+                                (proc first second))
+                     remainder)))
+          (fail)))))
+
+(define (make-scheme-lexer special-symbols special-prefixes)
+  "Return a lexer that highlights Scheme source code.  Tag strings
+that are in SPECIAL-SYMBOLS or match one of the string prefixes in
+SPECIAL-PREFIXES with the 'special' tag."
+  (lex-consume
+   (lex-any (lex-char-set char-set:whitespace)
+            (lex-tag 'open (lex-any* (map lex-string '("(" "[" "{"))))
+            (lex-tag 'close (lex-any* (map lex-string '(")" "]" "}"))))
+            (lex-tag 'comment (lex-delimited ";" #:until "\n"))
+            (lex-tag 'multi-line-comment
+                     (lex-delimited "#|" #:until "|#" #:nested? #t))
+            (lex-tag 'special
+                     (lex-filter (lambda (str)
+                                   (or (any (cut string=? <> str)
+                                            special-symbols)
+                                       (any (cut string-prefix? <> str)
+                                            special-prefixes)))
+                                 (lex-char-set char-set:lisp-symbol)))
+            (lex-tag 'string (lex-delimited "\""))
+            (lex-tag 'keyword
+                     (lex-map2 string-append
+                               (lex-all (lex-string "#:")
+                                        (lex-char-set char-set:lisp-symbol))))
+            (lex-tag 'symbol
+                     (lex-any (lex-delimited "#{" #:until "}#")
+                              (lex-char-set char-set:lisp-symbol))))))
+
+(define lex-scheme
+  (make-scheme-lexer %default-special-symbols %default-special-prefixes))

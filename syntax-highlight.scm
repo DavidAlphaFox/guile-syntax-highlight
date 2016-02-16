@@ -23,36 +23,34 @@
 
 (define-module (syntax-highlight)
   #:use-module (ice-9 match)
+  #:use-module (ice-9 rdelim)
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-11)
   #:use-module (srfi srfi-26)
-  #:use-module (srfi srfi-41)
-  #:use-module (syntax-highlight utils)
+  #:use-module (syntax-highlight lexers)
   #:export (highlight
             highlights->sxml))
 
-(define* (highlight highlighter #:optional (stream (current-input-port)))
-  "Apply HIGHLIGHTER, a syntax highlighting procedure, to STREAM.
-STREAM may be an open port, string, or SRFI-41 character stream.  If
-STREAM is not specified, characters are read from the current input
-port."
-  (let-values (((result remaining)
-                (highlighter (cond
-                              ((port? stream)
-                               (port->stream stream))
-                              ((string? stream)
-                               (string->stream stream))
-                              ((stream? stream)
-                               stream)
-                              (else
-                               (error "Cannot convert to stream: " stream))))))
-    ;; If there's a remainder, it means that parsing failed.  We want
-    ;; to preserve *all* of the input text, even if it is invalid.
-    ;; So, we take the stuff that could be parsed and tack on the
-    ;; stuff that wasn't.
-    (if (stream-null? remaining)
-        result
-        (append result (list (stream->string remaining))))))
+(define (object->string obj)
+  (cond
+   ((input-port? obj)
+    (read-string obj))
+   ((string? obj)
+    obj)
+   (else
+    (error "not an input port or string: "
+           obj))))
+
+(define object->cursor
+  (compose string->cursor object->string))
+
+(define* (highlight lexer #:optional (string-or-port (current-input-port)))
+  "Apply LEXER to STRING-OR-PORT, a string or an open input port.  If
+STRING-OR-PORT is not specified, characters are read from the current
+input port."
+  (let-values (((result remainder)
+                (lexer empty-tokens (object->cursor string-or-port))))
+    (and result (tokens->list result))))
 
 (define (highlights->sxml highlights)
   "Convert HIGHLIGHTS, a list of syntax highlighting expressions, into

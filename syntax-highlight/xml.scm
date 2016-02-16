@@ -26,86 +26,78 @@
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-11)
   #:use-module (srfi srfi-41)
-  #:use-module (syntax-highlight parsers)
-  #:export (xml-highlighter))
-
-(define (flatten+compact highlights)
-  (define tagged?
-    (match-lambda
-      (((? symbol?) _) #t)
-      (_ #f)))
-
-  (let loop ((highlights highlights)
-             (result '()))
-    (match highlights
-      (() (reverse result))
-      (("" . tail)
-       (loop tail result))
-      (((or (? string? head) (? tagged? head)) . tail)
-       (loop tail (cons head result)))
-      ((head . tail)
-       (loop tail (append (reverse (flatten+compact head)) result))))))
-
-(define parse-comment
-  (tagged-parser 'comment (parse-delimited "<!--" #:until "-->")))
-
-(define parse-xml-symbol
-  (parse-char-set
-   (char-set-union char-set:letter+digit
-                   (char-set #\. #\- #\_ #\:))))
-
-(define parse-element-name
-  (tagged-parser 'element parse-xml-symbol))
-
-(define parse-whitespace-maybe
-  (parse-maybe parse-whitespace))
-
-(define parse-attribute
-  (parse-each (tagged-parser 'attribute parse-xml-symbol)
-              parse-whitespace-maybe
-              (parse-string "=")
-              parse-whitespace-maybe
-              (tagged-parser 'string (parse-delimited "\""))))
-
-(define parse-open-tag
-  (parse-each (tagged-parser 'open (parse-any (parse-string "<?")
-                                              (parse-string "<")))
-              parse-element-name
-              (parse-many
-               (parse-any (parse-each
-                           parse-whitespace
-                           parse-attribute)
-                          parse-whitespace))
-              (tagged-parser 'close (parse-any (parse-string ">")
-                                               (parse-string "/>")
-                                               (parse-string "?>")))))
-
-(define parse-close-tag
-  (parse-each (tagged-parser 'open (parse-string "</"))
-              parse-element-name
-              (tagged-parser 'close (parse-string ">"))))
+  #:use-module (syntax-highlight lexers)
+  #:export (lex-xml))
 
 (define char-set:not-whitespace
   (char-set-complement char-set:whitespace))
 
-(define parse-tag
-  (parse-each (parse-string "<")
-              (parse-char-set
-               (char-set-delete char-set:not-whitespace #\>))
-              (parse-string ">")))
+(define char-set:xml-symbol
+  (char-set-union char-set:letter+digit
+                  (char-set #\. #\- #\_ #\:)))
 
-(define parse-entity
-  (tagged-parser 'entity (parse-delimited "&" #:until ";")))
+(define lex-comment
+  (lex-tag 'comment (lex-delimited "<!--" #:until "-->")))
 
-(define parse-text
-  (parse-char-set
-   (char-set-difference char-set:full (char-set #\<))))
+(define lex-xml-symbol
+  (lex-char-set char-set:xml-symbol))
 
-(define xml-highlighter
-  (parse-map flatten+compact
-             (parse-many
-              (parse-any parse-comment
-                         parse-close-tag
-                         parse-open-tag
-                         parse-entity
-                         parse-text))))
+(define lex-element-name
+  (lex-tag 'element lex-xml-symbol))
+
+(define lex-whitespace-maybe
+  (lex-maybe lex-whitespace))
+
+(define lex-attribute
+  (lex-all (lex-tag 'attribute lex-xml-symbol)
+           lex-whitespace-maybe
+           (lex-string "=")
+           lex-whitespace-maybe
+           (lex-tag 'string (lex-delimited "\""))))
+
+(define lex-open-tag
+  (lex-all (lex-tag 'open (lex-any (lex-string "<?")
+                                   (lex-string "<")))
+           lex-element-name
+           (lex-zero-or-more
+            (lex-any (lex-all lex-whitespace
+                              lex-attribute)
+                     lex-whitespace))
+           (lex-tag 'close (lex-any (lex-string ">")
+                                    (lex-string "/>")
+                                    (lex-string "?>")))))
+
+(define lex-close-tag
+  (lex-all (lex-tag 'open (lex-string "</"))
+           lex-element-name
+           (lex-tag 'close (lex-string ">"))))
+
+(define lex-entity
+  (lex-tag 'entity (lex-delimited "&" #:until ";")))
+
+(define lex-text
+  (lex-char-set (char-set-difference char-set:full
+                                     (char-set #\< #\&))))
+
+(define lex-whitespace-maybe
+  (lex-maybe lex-whitespace))
+
+(define lex-xml-element
+  (lex-tag 'element lex-xml-symbol))
+
+(define lex-xml-attribute
+  (lex-all (lex-tag 'attribute lex-xml-symbol)
+           lex-whitespace-maybe
+           (lex-string "=")
+           lex-whitespace-maybe
+           (lex-tag 'string (lex-delimited "\""))))
+
+(define lex-xml
+  (lex-consume
+   (lex-any lex-comment
+            lex-close-tag
+            lex-open-tag
+            lex-entity
+            lex-text)))
+
+(lex-xml empty-tokens (string->cursor "<foo bar=\"baz\">quux &copy; </foo>"))
