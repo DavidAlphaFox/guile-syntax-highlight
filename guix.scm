@@ -43,10 +43,10 @@
             (method git-fetch)
             (uri (git-reference
                   (url "git://dthompson.us/guile-syntax-highlight.git")
-                  (commit "deaad79")))
+                  (commit "2fd5092")))
             (sha256
              (base32
-              "00ppmg796mcahq8nnq081srf6iwx36biq7arvsi5azm7f6lmwkdc"))))
+              "0s1py5q80rjixdhmjvcnk4bnnfgp6bj786ippxsbg2grl77iplk9"))))
   (build-system gnu-build-system)
   (arguments
    '(#:phases
