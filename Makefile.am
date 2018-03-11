@@ -41,6 +41,7 @@ godir=$(libdir)/guile/$(GUILE_EFFECTIVE_VERSION)/ccache
 SOURCES =					\
   syntax-highlight/utils.scm			\
   syntax-highlight/lexers.scm			\
+  syntax-highlight/c.scm			\
   syntax-highlight/scheme.scm			\
   syntax-highlight/xml.scm			\
   syntax-highlight.scm
