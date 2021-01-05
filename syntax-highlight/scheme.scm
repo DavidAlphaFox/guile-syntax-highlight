@@ -28,7 +28,7 @@
   #:use-module (srfi srfi-26)
   #:use-module (syntax-highlight lexers)
   #:export (%default-special-symbols
-            %default-special-regexps
+            %default-special-prefixes
             make-scheme-lexer
             lex-scheme))
 
