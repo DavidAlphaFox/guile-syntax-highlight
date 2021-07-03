@@ -61,6 +61,12 @@ corresponding to the highlighting tag name."
 
   (map (match-lambda
          ((? string? str) str)
-         ((tag text)
-          `(span (@ (class ,(tag->class tag))) ,text)))
+         ((content ...)
+          (let loop ((tags '()) (text "") (content content))
+            (match content
+             (() `(span (@ (class ,(string-join (map tag->class tags) " "))) ,text))
+             (((? symbol? tag) content ...)
+              (loop (cons tag tags) text content))
+             (((? string? s) content ...)
+              (loop tags (string-append text s) content))))))
        highlights))
