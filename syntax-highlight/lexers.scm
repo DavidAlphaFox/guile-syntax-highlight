@@ -41,6 +41,7 @@
 
             empty-tokens
             token-add
+            token-append
             token-drop
             token-take
             token-peek
@@ -58,6 +59,7 @@
             lex-all
             lex-zero-or-more
             lex-consume
+            lex-consume-until
             lex-maybe
             lex-regexp
             lex-string
@@ -112,6 +114,9 @@ position."
 (define (token-add tokens new-token)
   (cons new-token tokens))
 
+(define (token-append tokens new-tokens)
+  (append new-tokens tokens))
+
 (define (token-peek tokens)
   (car tokens))
 
@@ -124,6 +129,13 @@ position."
 (define (tokens->list tokens)
   ;; Tokens are accumulated as a stack i.e. in reverse order.
   (reverse tokens))
+
+(define (token-tag tokens tag)
+  (map
+    (match-lambda
+      ((? string? tok) (list tag tok))
+      ((? list? tok) (cons tag tok)))
+    tokens))
 
 
 ;;;
@@ -226,6 +238,33 @@ returned as plain strings."
                       (move-cursor-to-end cursor))))))
 
   consume)
+
+(define* (lex-consume-until until lexer #:key (tag #f))
+  "Return a lexer that always succeeds with a list of as many consecutive
+successful applications of LEXER as possible, consuming the entire input text,
+or until a successful match of UNTIL, whichever comes first.  Sections of text
+that could not be lexed are returned as plain strings."
+  (define (substring* cursor start)
+    (substring (cursor-text cursor) start (cursor-position cursor)))
+
+  (define (consume-until tokens cursor)
+    (if (cursor-end? cursor)
+        (values tokens cursor)
+        (let-values (((result remainder) (until tokens cursor)))
+          (if result
+              (values result remainder)
+              (let-values (((result remainder) (lexer tokens cursor)))
+                (if result
+                    (consume-until result remainder)
+                    (values (token-add tokens (cursor->string cursor))
+                            (move-cursor-to-end cursor))))))))
+
+  (if tag
+      (lambda (tokens cursor)
+        (let-values (((result remainder) (consume-until empty-tokens cursor)))
+          (let ((result (token-tag result tag)))
+            (values (token-append tokens result) remainder))))
+      consume-until))
 
 (define (lex-maybe lexer)
   "Create a lexer that always succeeds, but tries to use LEXER.  If
