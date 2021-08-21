@@ -29,6 +29,7 @@
 
 (use-modules (guix packages)
              (guix licenses)
+             (guix git)
              (guix git-download)
              (guix build-system gnu)
              (gnu packages)
@@ -39,14 +40,7 @@
 (package
   (name "guile-syntax-highlight")
   (version "0.1")
-  (source (origin
-            (method git-fetch)
-            (uri (git-reference
-                  (url "git://dthompson.us/guile-syntax-highlight.git")
-                  (commit "2fd5092")))
-            (sha256
-             (base32
-              "0s1py5q80rjixdhmjvcnk4bnnfgp6bj786ippxsbg2grl77iplk9"))))
+  (source (git-checkout (url (dirname (current-filename)))))
   (build-system gnu-build-system)
   (arguments
    '(#:phases
