@@ -58,7 +58,7 @@
      ("automake" ,automake)
      ("pkg-config" ,pkg-config)))
   (inputs
-   `(("guile" ,guile-2.0)))
+   `(("guile" ,guile-3.0)))
   (synopsis "General-purpose syntax highlighter for GNU Guile")
   (description "Guile-syntax-highlight is a general-purpose syntax
 highlighting library for GNU Guile.  It can parse code written in
