@@ -63,10 +63,13 @@
             lex-maybe
             lex-regexp
             lex-string
+            lex-char
             lex-char-set
             lex-whitespace
             lex-delimited
-            lex-tag))
+            lex-tag
+            lex-group
+            lex-peek))
 
 (define (string-prefix?* s1 s2 start-s2)
   (string-prefix? s1 s2 0 (string-length s1) start-s2))
@@ -300,7 +303,7 @@ STR."
                 (move-cursor-by cursor (string-length str)))
         (fail))))
 
-(define (lex-char-set char-set)
+(define* (lex-char-set char-set #:key (min 1) (max #f))
   "Return a lexer that succeeds with the nonempty input prefix that
 matches CHAR-SET, or fails if the first input character does not
 belong to CHAR-SET."
@@ -308,7 +311,7 @@ belong to CHAR-SET."
     (let ((len (string-length str)))
       (let loop ((index start))
         (cond
-         ((>= index len)
+         ((or (>= index len) (and max (>= (- index start) max)))
           (substring str start len))
          ((char-set-contains? char-set (string-ref str index))
           (loop (1+ index)))
@@ -316,11 +319,22 @@ belong to CHAR-SET."
           (substring str start index))))))
 
   (lambda (tokens cursor)
-    (match (char-set-substring (cursor-text cursor) (cursor-position cursor))
-      ("" (fail))
-      (str
-       (values (token-add tokens str)
-               (move-cursor-by cursor (string-length str)))))))
+    (let ((str (char-set-substring (cursor-text cursor) (cursor-position cursor))))
+      (cond
+        ((equal? str "") (fail))
+        ((< (string-length str) min) (fail))
+        (else
+         (values (token-add tokens str)
+                 (move-cursor-by cursor (string-length str))))))))
+
+(define (lex-char char-set)
+  "Lex exactly one character in the given CHAR-SET."
+  (lambda (tokens cursor)
+    (let ((chr (string-ref (cursor-text cursor) (cursor-position cursor))))
+      (if (char-set-contains? char-set chr)
+          (values (token-add tokens (string chr))
+                  (move-cursor-by cursor 1))
+          (fail)))))
 
 (define lex-whitespace
   (lex-char-set char-set:whitespace))
@@ -369,4 +383,23 @@ itself."
           (values (token-add (token-drop result 1)
                              (list tag (token-peek result)))
                   remainder)
+          (fail)))))
+
+(define (lex-group lexer)
+  "Group the elements returned by LEXER under a single token.  LEXER must return
+a list of strings, with no tags."
+  (lambda (tokens cursor)
+    (let-values (((result remainder) (lexer empty-tokens cursor)))
+      (if result
+          (values (token-add tokens (apply string-append (tokens->list result)))
+                  remainder)
+          (fail)))))
+
+(define (lex-peek lexer)
+  "Runs a lexer on the rest of the string, but does not advance the token.  Fails
+if LEXER failed, succeeds otherwise"
+  (lambda (tokens cursor)
+    (let-values (((result remainder) (lexer empty-tokens cursor)))
+      (if result
+          (values tokens cursor)
           (fail)))))
