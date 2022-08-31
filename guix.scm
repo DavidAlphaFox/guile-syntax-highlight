@@ -23,14 +23,13 @@
 ;;
 ;; To use as the basis for a development environment, run:
 ;;
-;;   guix environment -l guix.scm
+;;   guix shell
 ;;
 ;;; Code:
 
 (use-modules (guix packages)
              (guix licenses)
              (guix git)
-             (guix git-download)
              (guix build-system gnu)
              (gnu packages)
              (gnu packages autotools)
@@ -47,12 +46,8 @@
      (modify-phases %standard-phases
        (add-after 'unpack 'bootstrap
          (lambda _ (zero? (system* "sh" "bootstrap")))))))
-  (native-inputs
-   `(("autoconf" ,autoconf)
-     ("automake" ,automake)
-     ("pkg-config" ,pkg-config)))
-  (inputs
-   `(("guile" ,guile-3.0)))
+  (native-inputs (list autoconf automake pkg-config))
+  (inputs (list guile-3.0))
   (synopsis "General-purpose syntax highlighter for GNU Guile")
   (description "Guile-syntax-highlight is a general-purpose syntax
 highlighting library for GNU Guile.  It can parse code written in
