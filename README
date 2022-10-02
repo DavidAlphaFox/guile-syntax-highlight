@@ -7,6 +7,8 @@ converted to HTML (via SXML) or any other format for rendering.
 
 * Supported Languages
 
+  - C
+  - CSS
   - Scheme
   - XML
 
@@ -22,14 +24,14 @@ converted to HTML (via SXML) or any other format for rendering.
 
     ;; Get raw highlights list.
     (define highlighted-code
-      (highlight scheme-highlighter code))
+      (highlight lex-scheme code))
 
     ;; Convert to SXML.
     (define highlighted-sxml
       (highlights->sxml highlighted-code))
 
     ;; Write HTML to stdout.
-    (display (sxml->xml highlighted-sxml))
+    (sxml->xml highlighted-sxml)
     (newline)
   #+END_SRC
 
