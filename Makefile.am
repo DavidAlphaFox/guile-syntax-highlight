@@ -44,6 +44,7 @@ SOURCES =					\
   syntax-highlight/c.scm			\
   syntax-highlight/css.scm			\
   syntax-highlight/gitignore.scm		\
+  syntax-highlight/lisp.scm			\
   syntax-highlight/scheme.scm			\
   syntax-highlight/xml.scm			\
   syntax-highlight.scm
