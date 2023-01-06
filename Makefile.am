@@ -58,4 +58,4 @@ publish: distcheck
 	gpg --sign --armor --yes guile-syntax-highlight-$(VERSION).tar.gz && \
         scp guile-syntax-highlight-$(VERSION).tar.gz \
 	    guile-syntax-highlight-$(VERSION).tar.gz.asc \
-	    blog@dthompson.us:/var/www/files/guile-syntax-highlight/
+	    publish@dthompson.us:/var/www/files/guile-syntax-highlight/
