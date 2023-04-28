@@ -55,7 +55,7 @@ EXTRA_DIST +=					\
   guix.scm
 
 publish: distcheck
-	gpg --sign --armor --yes guile-syntax-highlight-$(VERSION).tar.gz && \
+	gpg --sign --detach-sign --armor --yes guile-syntax-highlight-$(VERSION).tar.gz && \
         scp guile-syntax-highlight-$(VERSION).tar.gz \
 	    guile-syntax-highlight-$(VERSION).tar.gz.asc \
 	    publish@dthompson.us:/var/www/files/guile-syntax-highlight/
